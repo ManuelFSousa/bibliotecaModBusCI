@@ -13,22 +13,24 @@ int Read_h_regs(struct sockaddr_in *server_add , int port, uint32_t st_r , uint1
         printf("\nParameter Error on function Read_h_regs");
     }
 
-    uint8_t comando[MAXbytes], resposta[MAXbytes];
+    int APDU_length = 5;
+
+    uint8_t APDU[APDU_length], resposta[MAXbytes];
     int count, count2;
 
-    comando[0] = (uint8_t) functionCode_h_regs;
-    comando[1] = (uint8_t) (st_r >> 8); 
-    comando[2] = (uint8_t) (st_r & 0xff);
-    comando[3] = (uint8_t) (n_r >> 8);      // shift the higher 8 bits
-    comando[4] = (uint8_t) (n_r & 0xff);    // mask the lower 8 bits
+    APDU[0] = (uint8_t) functionCode_h_regs;
+    APDU[1] = (uint8_t) (st_r >> 8); 
+    APDU[2] = (uint8_t) (st_r & 0xff);
+    APDU[3] = (uint8_t) (n_r >> 8);      // shift the higher 8 bits
+    APDU[4] = (uint8_t) (n_r & 0xff);    // mask the lower 8 bits
 
     printf("\nSent Command: ");
-    for(count = 0 ; count < MAXbytes ; count++)
-        printf("%u", comando[count]);
+    for(count = 0 ; count < APDU_length ; count++)
+        printf("%u ", APDU[count]);
     printf("\n");
 
-    if(Send_Modbus_request(server_add, port, comando, 5, resposta) < 0){
-        printf("\nError while sending the request \n\n");
+    if(Send_Modbus_request(server_add, port, APDU, APDU_length, resposta) < 0){
+        printf("\nError while sending the request (Read Holding Registers)\n\n");
         return -1;
     }
 
@@ -43,7 +45,7 @@ int Read_h_regs(struct sockaddr_in *server_add , int port, uint32_t st_r , uint1
             return -1;
         }
         else if(resposta[1] == 0x02){
-            printf("\nException Code 02: Registers Read Address RError\n\n");
+            printf("\nException Code 02: Registers Read Address Error\n\n");
             return -2;
         }
         else if(resposta[1] == 0x03){
@@ -65,8 +67,66 @@ int Read_h_regs(struct sockaddr_in *server_add , int port, uint32_t st_r , uint1
     return n_r;
 }
 
-int Write_multiple_regs(struct sockaddr_in server_add , int port, char* st_r , int n_r , int val){
-    return -1;
+int Write_multiple_regs(struct sockaddr_in *server_add , int port, uint32_t st_r , uint16_t n_r , uint16_t *val){
+    if(server_add == NULL || port < 0 || port > 65535 || st_r < 1 || st_r > 65536 || n_r > 65536-1+1 || st_r + n_r - 1 > 65536 || val == NULL){
+        printf("\nParameter Error on function Read_h_regs");
+    }
+
+    uint8_t APDU[MAXbytes], resposta[MAXbytes];
+    int count, count2;
+
+    APDU[0] = (uint8_t) functionCode_w_multRegs;
+    APDU[1] = (uint8_t) (st_r >> 8); 
+    APDU[2] = (uint8_t) (st_r & 0xff);
+    APDU[3] = (uint8_t) (n_r >> 8);      // shift the higher 8 bits
+    APDU[4] = (uint8_t) (n_r & 0xff);    // mask the lower 8 bits
+    APDU[5] = (uint8_t) (n_r*2);
+
+    count2 = 6;
+    for(count = 0 ; count < n_r ; count++){
+        APDU[count2] = (uint8_t) (val[count] >> 8);
+        APDU[count2 + 1] = (uint8_t) (val[count] & 0xff);
+        count2 += 2;
+    }
+    
+
+    printf("\nSent Command: ");
+    for(count = 0 ; count < MAXbytes ; count++)
+        printf("%u", APDU[count]);
+    printf("\n");
+
+    if(Send_Modbus_request(server_add, port, APDU, 5, resposta) < 0){
+        printf("\nError while sending the request (Write Multiple Registers)\n\n");
+        return -1;
+    }
+
+    printf("\nReceived Message: ");
+    for(count = 0 ; count < MAXbytes ; count++)
+        printf("%u ", resposta[count]);
+    printf("\n");
+
+    if(resposta[0] = 0x90){
+        if(resposta[1] == 0x01){
+            printf("\nException Code 01: Function Code Unsupported\n\n");
+            return -1;
+        }
+        else if(resposta[1] == 0x02){
+            printf("\nException Code 02: Registers Write Address Error\n\n");
+            return -2;
+        }
+        else if(resposta[1] == 0x03){
+            printf("\nException Code 03: Quantity of Registers out of boundaries\n\n");
+            return -3;
+        }
+        else if(resposta[1] == 0x04){
+            printf("\nException Code 04: Error Writing the Registers\n\n");
+            return -4;
+        }
+    }
+
+    int regWrite = (resposta[3] << 8) + (resposta[4]);
+
+    return regWrite;
 }
 
 int Get_Request(){

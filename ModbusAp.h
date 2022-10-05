@@ -27,7 +27,7 @@
  * @param val 
  * @return int 
  */
-int Read_h_regs(struct sockaddr_in server_add , int port, char* st_r , int n_r , int val);
+int Read_h_regs(struct sockaddr_in *server_add , int port, uint32_t st_r , uint16_t n_r , uint16_t *val);
 
 /**
  * @brief 
@@ -39,7 +39,7 @@ int Read_h_regs(struct sockaddr_in server_add , int port, char* st_r , int n_r ,
  * @param val 
  * @return int 
  */
-int Write_multiple_regs(struct sockaddr_in server_add , int port, char* st_r , int n_r , int val);
+int Write_multiple_regs(struct sockaddr_in *server_add , int port, uint32_t st_r , uint16_t n_r , uint16_t *val);
 
 int Get_Request();
 
