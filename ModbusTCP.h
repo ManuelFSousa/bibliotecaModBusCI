@@ -1,9 +1,16 @@
+#ifndef _MODBUSTCP_H
+#define _MODBUSTCP_H
+
 #include <stdio.h>
 #include <string.h>	
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+
+#define MBAP_SIZE 7
+
+uint16_t transactionIdentifier;
 
 /**
  * @brief Construct a new Send_Modbus_request object
@@ -14,8 +21,10 @@
  * @param APDUlen 
  * @param APDU_R 
  */
-Send_Modbus_request(struct sockaddr_in *server_add, int port, uint8_t* APDU, int APDUlen, uint8_t *APDU_R);
+int Send_Modbus_request(struct sockaddr_in * server_add, int port, uint8_t * APDU, uint16_t APDUlen, uint8_t * APDU_R, uint16_t * APDU_Rlen);
 
-Receive_Modbus_request();
+int Receive_Modbus_request();
 
-Send_Modbus_response();
+int Send_Modbus_response();
+
+#endif

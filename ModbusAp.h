@@ -15,7 +15,7 @@
 #define functionCode_h_regs             0x03
 #define functionCode_w_multRegs         0x10
 
-#define MAXbytes 253
+#define APDU_MAX_LENGTH 253
 
 /**
  * @brief 
