@@ -19,7 +19,7 @@ int comsStart(int sockfd, uint8_t *PDU, int PDU_SIZE, uint8_t *APDU_R, uint16_t*
         printf("\nPDU Reception Error\n\n");
         return -1;
     }
-
+    
     if(((APDU_R[0] << 8) + APDU_R[1]) != transactionIdentifier){
         printf("\nUnmatched transaction identifier\n\n");
         return -1;
@@ -47,9 +47,9 @@ int comsStart(int sockfd, uint8_t *PDU, int PDU_SIZE, uint8_t *APDU_R, uint16_t*
     return 0;
 }
 
-int Send_Modbus_request(struct sockaddr_in * server_add, int port, uint8_t * APDU, uint16_t APDUlen, uint8_t * APDU_R, uint16_t *APDU_Rlen){
+int Send_Modbus_request(char *address, int port, uint8_t * APDU, uint16_t APDUlen, uint8_t * APDU_R, uint16_t *APDU_Rlen){
 
-    if(server_add == NULL || port < 0 || port > 65535 || APDU == NULL || APDUlen > APDU_MAX_LENGTH || APDU_R == NULL || APDU_Rlen == NULL){
+    if(address == NULL || port < 0 || port > 65535 || APDU == NULL || APDUlen > APDU_MAX_LENGTH || APDU_R == NULL || APDU_Rlen == NULL){
         printf("\nParameter Error on function Read_h_regs");
         return -1;
     }
@@ -68,20 +68,23 @@ int Send_Modbus_request(struct sockaddr_in * server_add, int port, uint8_t * APD
     for(count = 0; count < APDUlen ; count++)
         PDU[count + 7] = APDU[count];
 
-    transactionIdentifier++;
-
-    printf("\nSent Command: ");
+    printf("\nPDU Built: ");
     for(count = 0 ; count < (APDUlen + MBAP_SIZE) ; count++)
         printf("%u ", PDU[count]);
     printf("\n");
+
+    struct sockaddr_in servaddr;
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(port);
+    inet_aton(address, &servaddr.sin_addr);
 
     int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(sockfd == -1){
         printf("\nSocket Creation Error\n\n");
         return -1;
     }
-
-    if(connect(sockfd, (struct sockaddr*) &server_add, sizeof(server_add)) == -1){
+    
+    if(connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) == -1){
         close(sockfd);
         printf("\nServer Connection Error\n\n");
         return -1;
@@ -92,6 +95,8 @@ int Send_Modbus_request(struct sockaddr_in * server_add, int port, uint8_t * APD
         close(sockfd);
         return -1;
     }
+
+    transactionIdentifier++;
 
     printf("\nReceived Message: ");
     for(count = 0 ; count < *APDU_Rlen ; count++)

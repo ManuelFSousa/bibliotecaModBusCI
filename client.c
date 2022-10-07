@@ -11,15 +11,15 @@
 
 int main(){
     uint16_t val[10];
-    
-    struct sockaddr_in servaddr;
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(PORT);
-    servaddr.sin_addr.s_addr = inet_addr(address);
 
-    Read_h_regs(&servaddr, PORT, 2, 2, val);
+    transactionIdentifier = 0;
 
-    uint16_t resultado = val[0] + val[1];
+    Read_h_regs(address, PORT, 2, 5, val);
 
-    Write_multiple_regs(&servaddr, PORT, 2, 1, &resultado);
+    uint16_t resultado[4];
+    for(int i = 0 ; i < 4 ; i++){
+        resultado[i] = val[i] + val[i + 1];  //Somar valores do registo atual e seguinte
+    }
+
+    Write_multiple_regs(address, PORT, 2, 4, resultado);
 }

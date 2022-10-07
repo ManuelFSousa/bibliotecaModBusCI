@@ -7,12 +7,14 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-int Read_h_regs(struct sockaddr_in *server_add , int port, uint16_t st_r , uint16_t n_r , uint16_t *val){
+int Read_h_regs(char *address , int port, uint16_t st_r , uint16_t n_r , uint16_t *val){
 
-    if(server_add == NULL || port < 0 || port > 65535 || (int)st_r < 1 || (int)st_r > 65536 || (int)n_r > 65536-1+1 || (int)st_r + (int)n_r - 1 > 65536){
+    if(address == NULL || port < 0 || port > 65535 || (int)st_r < 1 || (int)st_r > 65536 || (int)n_r > 65536-1+1 || (int)st_r + (int)n_r - 1 > 65536){
         printf("\nParameter Error on function Read_h_regs");
         return -1;
     }
+
+    printf("\n************Reading Hold Registers************\n");
 
     int APDU_length = 5;
 
@@ -26,19 +28,19 @@ int Read_h_regs(struct sockaddr_in *server_add , int port, uint16_t st_r , uint1
     APDU[3] = (uint8_t) (n_r >> 8);      // shift the higher 8 bits
     APDU[4] = (uint8_t) (n_r & 0xff);    // mask the lower 8 bits
 
-    printf("\nSent Command: ");
+    printf("\nAPDU Built: ");
     for(count = 0 ; count < APDU_length ; count++)
         printf("%u ", APDU[count]);
     printf("\n");
 
-    if(Send_Modbus_request(server_add, port, APDU, APDU_length, resposta, &respostaLength) < 0){
+    if(Send_Modbus_request(address, port, APDU, APDU_length, resposta, &respostaLength) < 0){
         printf("\nError while sending the request (Read Holding Registers)\n\n");
         return -1;
     }
 
     printf("\nReceived Message: ");
-    for(count = 0 ; count < APDU_MAX_LENGTH ; count++)
-        printf("%u", resposta[count]);
+    for(count = 0 ; count < respostaLength ; count++)
+        printf("%u ", resposta[count]);
     printf("\n");
 
     if(resposta[0] == functionCode_h_regs + 0x80){
@@ -69,11 +71,13 @@ int Read_h_regs(struct sockaddr_in *server_add , int port, uint16_t st_r , uint1
     return n_r;
 }
 
-int Write_multiple_regs(struct sockaddr_in *server_add , int port, uint16_t st_r , uint16_t n_r , uint16_t *val){
-    if(server_add == NULL || port < 0 || port > 65535 || st_r < 1 || (int)st_r > 65536 || (int)n_r > 65536-1+1 || (int)st_r + (int)n_r - 1 > 65536 || val == NULL){
+int Write_multiple_regs(char *address , int port, uint16_t st_r , uint16_t n_r , uint16_t *val){
+    if(address == NULL || port < 0 || port > 65535 || st_r < 1 || (int)st_r > 65536 || (int)n_r > 65536-1+1 || (int)st_r + (int)n_r - 1 > 65536 || val == NULL){
         printf("\nParameter Error on function Read_h_regs");
         return -1;
     }
+
+    printf("\n************Writing Multiple Registers************\n");
 
     uint8_t APDU[APDU_MAX_LENGTH], resposta[APDU_MAX_LENGTH];
     uint16_t respostaLength;
@@ -93,19 +97,20 @@ int Write_multiple_regs(struct sockaddr_in *server_add , int port, uint16_t st_r
         count2 += 2;
     }
     
+    uint16_t APDUlen = (6 + n_r*2);
 
-    printf("\nSent Command: ");
-    for(count = 0 ; count < APDU_MAX_LENGTH ; count++)
-        printf("%u", APDU[count]);
+    printf("\nAPDU Built: ");
+    for(count = 0 ; count < APDUlen ; count++)
+        printf("%u ", APDU[count]);
     printf("\n");
 
-    if(Send_Modbus_request(server_add, port, APDU, 5, resposta, &respostaLength) < 0){
+    if(Send_Modbus_request(address, port, APDU, APDUlen, resposta, &respostaLength) < 0){
         printf("\nError while sending the request (Write Multiple Registers)\n\n");
         return -1;
     }
 
     printf("\nReceived Message: ");
-    for(count = 0 ; count < APDU_MAX_LENGTH ; count++)
+    for(count = 0 ; count < respostaLength ; count++)
         printf("%u ", resposta[count]);
     printf("\n");
 
