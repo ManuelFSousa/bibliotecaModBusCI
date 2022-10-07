@@ -17,9 +17,9 @@
 
 #define APDU_MAX_LENGTH 253
 
-int Read_h_regs(struct sockaddr_in *server_add , int port, uint16_t st_r , uint16_t n_r , uint16_t *val);
+int Read_h_regs(char *address , int port, uint16_t st_r , uint16_t n_r , uint16_t *val);
 
-int Write_multiple_regs(struct sockaddr_in *server_add , int port, uint16_t st_r , uint16_t n_r , uint16_t *val);
+int Write_multiple_regs(char *address , int port, uint16_t st_r , uint16_t n_r , uint16_t *val);
 
 int Get_Request();
 
