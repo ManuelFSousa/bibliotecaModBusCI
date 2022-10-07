@@ -12,15 +12,6 @@
 
 uint16_t transactionIdentifier;
 
-/**
- * @brief Construct a new Send_Modbus_request object
- * 
- * @param server_add 
- * @param port 
- * @param APDU 
- * @param APDUlen 
- * @param APDU_R 
- */
 int Send_Modbus_request(struct sockaddr_in * server_add, int port, uint8_t * APDU, uint16_t APDUlen, uint8_t * APDU_R, uint16_t * APDU_Rlen);
 
 int Receive_Modbus_request();
