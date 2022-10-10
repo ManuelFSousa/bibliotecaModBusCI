@@ -137,11 +137,3 @@ int Write_multiple_regs(char *address , int port, uint16_t st_r , uint16_t n_r ,
 
     return regWrite;
 }
-
-int Get_Request(){
-    return -1;
-}
-
-int Send_Request(){
-    return -1;
-}

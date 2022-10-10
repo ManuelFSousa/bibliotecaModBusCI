@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#define address "127.0.0.1"
+#define address "172.18.16.1"
 #define PORT 502
 
 int main(){
