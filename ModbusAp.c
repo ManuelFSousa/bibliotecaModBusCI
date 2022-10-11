@@ -18,57 +18,58 @@ int Read_h_regs(char *address , int port, uint16_t st_r , uint16_t n_r , uint16_
 
     int APDU_length = 5;
 
-    uint8_t APDU[APDU_length], resposta[APDU_MAX_LENGTH];
-    uint16_t respostaLength;
+    uint8_t APDU[APDU_length], response[APDU_MAX_LENGTH];
+    uint16_t responseLength;
     int count, count2;
 
-    APDU[0] = (uint8_t) functionCode_h_regs;
-    APDU[1] = (uint8_t) (st_r >> 8); 
-    APDU[2] = (uint8_t) (st_r & 0xff);
-    APDU[3] = (uint8_t) (n_r >> 8);      // shift the higher 8 bits
-    APDU[4] = (uint8_t) (n_r & 0xff);    // mask the lower 8 bits
+    APDU[0] = (uint8_t) functionCode_h_regs;        //Function Code
+    APDU[1] = (uint8_t) (st_r >> 8);                //Starting Address: MSB
+    APDU[2] = (uint8_t) (st_r & 0xff);              //Starting Address: LSB
+    APDU[3] = (uint8_t) (n_r >> 8);                 //Quantity of Register: MSB
+    APDU[4] = (uint8_t) (n_r & 0xff);               //Quantity of Register: LSB
 
     printf("\nAPDU Built: ");
     for(count = 0 ; count < APDU_length ; count++)
         printf("%u ", APDU[count]);
     printf("\n");
 
-    if(Send_Modbus_request(address, port, APDU, APDU_length, resposta, &respostaLength) < 0){
+    if(Send_Modbus_request(address, port, APDU, APDU_length, response, &responseLength) < 0){
         printf("\nError while sending the request (Read Holding Registers)\n\n");
         return -1;
     }
 
     printf("\nReceived Message: ");
-    for(count = 0 ; count < respostaLength ; count++)
-        printf("%u ", resposta[count]);
+    for(count = 0 ; count < responseLength ; count++)
+        printf("%u ", response[count]);
     printf("\n");
 
-    if(resposta[0] == functionCode_h_regs + 0x80){
-        if(resposta[1] == 0x01){
+    if(response[0] == functionCode_h_regs + 0x80){
+        if(response[1] == 0x01){
             printf("\nException Code 01: Function Code Unsupported\n\n");
-            return -1;
+            return 1;
         }
-        else if(resposta[1] == 0x02){
+        else if(response[1] == 0x02){
             printf("\nException Code 02: Registers Read Address Error\n\n");
-            return -2;
+            return 2;
         }
-        else if(resposta[1] == 0x03){
+        else if(response[1] == 0x03){
             printf("\nException Code 03: Quantity of Registers out of boundaries\n\n");
-            return -3;
+            return 3;
         }
-        else if(resposta[1] == 0x04){
+        else if(response[1] == 0x04){
             printf("\nException Code 04: Error Reading the Registers\n\n");
-            return -4;
+            return 4;
         }
     }
 
     count2 = 2;
     for(count = 0 ; count < n_r; count++){
-        val[count] = (resposta[count2] >> 8) + resposta[count2 + 1];
+        val[count] = (response[count2] >> 8) + response[count2 + 1];
         count2 += 2;
     }
 
-    return n_r;
+    //return n_r;
+    return 0;
 }
 
 int Write_multiple_regs(char *address , int port, uint16_t st_r , uint16_t n_r , uint16_t *val){
@@ -79,21 +80,21 @@ int Write_multiple_regs(char *address , int port, uint16_t st_r , uint16_t n_r ,
 
     printf("\n************Writing Multiple Registers************\n");
 
-    uint8_t APDU[APDU_MAX_LENGTH], resposta[APDU_MAX_LENGTH];
-    uint16_t respostaLength;
+    uint8_t APDU[APDU_MAX_LENGTH], response[APDU_MAX_LENGTH];
+    uint16_t responseLength;
     int count, count2;
 
-    APDU[0] = (uint8_t) functionCode_w_multRegs;
-    APDU[1] = (uint8_t) (st_r >> 8); 
-    APDU[2] = (uint8_t) (st_r & 0xff);
-    APDU[3] = (uint8_t) (n_r >> 8);      // shift the higher 8 bits
-    APDU[4] = (uint8_t) (n_r & 0xff);    // mask the lower 8 bits
-    APDU[5] = (uint8_t) (n_r*2);
+    APDU[0] = (uint8_t) functionCode_w_multRegs;            //Function Code
+    APDU[1] = (uint8_t) (st_r >> 8);                        //Starting Address: MSB
+    APDU[2] = (uint8_t) (st_r & 0xff);                      //Starting Address: LSB
+    APDU[3] = (uint8_t) (n_r >> 8);                         //Quantity of Registers: MSB
+    APDU[4] = (uint8_t) (n_r & 0xff);                       //Quantity of Registers: LSB 
+    APDU[5] = (uint8_t) (n_r*2);                            //Byte Count 
 
     count2 = 6;
     for(count = 0 ; count < n_r ; count++){
-        APDU[count2] = (uint8_t) (val[count] >> 8);
-        APDU[count2 + 1] = (uint8_t) (val[count] & 0xff);
+        APDU[count2] = (uint8_t) (val[count] >> 8);         //Register Value: MSB
+        APDU[count2 + 1] = (uint8_t) (val[count] & 0xff);   //Register Value: LSB
         count2 += 2;
     }
     
@@ -104,36 +105,37 @@ int Write_multiple_regs(char *address , int port, uint16_t st_r , uint16_t n_r ,
         printf("%u ", APDU[count]);
     printf("\n");
 
-    if(Send_Modbus_request(address, port, APDU, APDUlen, resposta, &respostaLength) < 0){
+    if(Send_Modbus_request(address, port, APDU, APDUlen, response, &responseLength) < 0){
         printf("\nError while sending the request (Write Multiple Registers)\n\n");
         return -1;
     }
 
     printf("\nReceived Message: ");
-    for(count = 0 ; count < respostaLength ; count++)
-        printf("%u ", resposta[count]);
+    for(count = 0 ; count < responseLength ; count++)
+        printf("%u ", response[count]);
     printf("\n");
 
-    if(resposta[0] == 0x90){
-        if(resposta[1] == 0x01){
+    if(response[0] == 0x90){
+        if(response[1] == 0x01){
             printf("\nException Code 01: Function Code Unsupported\n\n");
-            return -1;
+            return 1;
         }
-        else if(resposta[1] == 0x02){
+        else if(response[1] == 0x02){
             printf("\nException Code 02: Registers Write Address Error\n\n");
-            return -2;
+            return 2;
         }
-        else if(resposta[1] == 0x03){
+        else if(response[1] == 0x03){
             printf("\nException Code 03: Quantity of Registers out of boundaries\n\n");
-            return -3;
+            return 3;
         }
-        else if(resposta[1] == 0x04){
+        else if(response[1] == 0x04){
             printf("\nException Code 04: Error Writing the Registers\n\n");
-            return -4;
+            return 4;
         }
     }
 
-    int regWrite = (resposta[3] << 8) + (resposta[4]);
+    int regWrite = (response[3] << 8) + (response[4]);
 
-    return regWrite;
+    //return regWrite;
+    return 0;
 }

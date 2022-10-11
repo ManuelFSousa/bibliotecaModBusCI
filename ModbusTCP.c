@@ -57,13 +57,13 @@ int Send_Modbus_request(char *address, int port, uint8_t * APDU, uint16_t APDUle
     uint8_t MBAPDU[MBAP_SIZE + APDUlen];
     int count, MBAPDU_SIZE, respostaLength;
 
-    MBAPDU[0] = (uint8_t) (transactionIdentifier >> 8);
-    MBAPDU[1] = (uint8_t) (transactionIdentifier & 0x00ff);
-    MBAPDU[2] = (uint8_t) (0 >> 8);
-    MBAPDU[3] = (uint8_t) (0 & 0xff);
-    MBAPDU[4] = (uint8_t) ((1 + APDUlen) >> 8);
-    MBAPDU[5] = (uint8_t) ((1 + APDUlen) & 0xff);
-    MBAPDU[6] = (uint8_t) (1);
+    MBAPDU[0] = (uint8_t) (transactionIdentifier >> 8);         //Transaction Identifier: MSB
+    MBAPDU[1] = (uint8_t) (transactionIdentifier & 0x00ff);     //Transaction Identifier: LSB
+    MBAPDU[2] = (uint8_t) (0 >> 8);                             //Protocol Identifier: MSB
+    MBAPDU[3] = (uint8_t) (0 & 0xff);                           //Protocol Identifier: LSB
+    MBAPDU[4] = (uint8_t) ((1 + APDUlen) >> 8);                 //Length: MSB
+    MBAPDU[5] = (uint8_t) ((1 + APDUlen) & 0xff);               //Length: LSB
+    MBAPDU[6] = (uint8_t) (2);                                  //Unit ID
 
     for(count = 0; count < APDUlen ; count++)
         MBAPDU[count + 7] = APDU[count];
